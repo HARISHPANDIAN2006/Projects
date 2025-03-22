@@ -1,0 +1,179 @@
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <vector>
+
+using namespace std;
+
+class Account {
+protected:
+    string password = "ABCD@1234";
+    int balance;
+public:
+    string name, accnum, phnum;
+    
+    Account(string n, string an, string pn, int b) : name(n), accnum(an), phnum(pn), balance(b) {}
+    
+    bool encryption(string pass) {
+        if (pass == password) {
+            cout << "\nLOGIN SUCCESSFUL!" << endl;
+            return true;
+        } else {
+            cout << "\nPASSWORD INCORRECT!" << endl;
+            return false;
+        }
+    }
+    
+    void deposit(int amount) {
+        balance += amount;
+        cout << "Deposited: " << amount << " | New Balance: " << balance << endl;
+    }
+    
+    void withdraw(int amount) {
+        if (amount > balance) {
+            cout << "Insufficient funds!" << endl;
+        } else {
+            balance -= amount;
+            cout << "Withdrawn: " << amount << " | New Balance: " << balance << endl;
+        }
+    }
+    
+    void checkBalance() {
+        cout << "Current Balance: " << balance << endl;
+    }
+    
+    friend void display(const Account& obj);
+};
+
+void display(const Account& obj) {
+    cout << "\nAccount Details:\n";
+    cout << "Name: " << obj.name << "\nAccount Number: " << obj.accnum << "\nPhone: " << obj.phnum << "\nBalance: " << obj.balance << endl;
+}
+
+class GiftCard {
+protected:
+    int balance;
+    fstream file;
+public:
+    string name, accnum, phnum;
+    
+    GiftCard(string n, string an, string pn, int b) : name(n), accnum(an), phnum(pn), balance(b) {}
+    
+    void create() {
+        cout << "Gift Card Created Successfully!" << endl;
+    }
+    
+    void topUp(int amount) {
+        balance += amount;
+        cout << "Gift Card Topped Up! New Balance: " << balance << endl;
+    }
+    
+    void transactionHistory() {
+        file.open("transaction.txt", ios::in);
+        if (!file) {
+            cout << "No transaction history available." << endl;
+            return;
+        }
+        cout << "\nTransaction History:\n";
+        string line;
+        while (getline(file, line)) {
+            cout << line << endl;
+        }
+        file.close();
+    }
+    
+    void blockCard() {
+        cout << "Gift Card has been BLOCKED due to security reasons!" << endl;
+    }
+    
+    void logout() {
+        cout << "Logged out successfully!" << endl;
+    }
+};
+
+class RedeemPoints : public Account, public GiftCard {
+public:
+    RedeemPoints(string n, string an, string pn, int b) : Account(n, an, pn, b), GiftCard(n, an, pn, b) {}
+    
+    void redeem(float amount) {
+        if (balance >= amount) {
+            balance -= amount;
+            cout << "Redeemed Rs." << amount << " from Gift Card! New Balance: " << balance << endl;
+        } else {
+            cout << "Insufficient Gift Card balance!" << endl;
+        }
+    }
+    
+    void redeem(int points) {
+        float amount = points * 0.1;
+        if (balance >= amount) {
+            balance -= amount;
+            cout << "Redeemed Rs." << amount << " worth of points! New Balance: " << balance << endl;
+        } else {
+            cout << "Insufficient points balance!" << endl;
+        }
+    }
+};
+
+int main() {
+    string user, pass, name, accnum, phnum;
+    int balance = 50000, attempts = 3;
+    
+    cout << "\n*** CUSTOMER LOGIN ***" << endl;
+    cout << "Username: "; cin >> user;
+    cout << "Password: "; cin >> pass;
+    cout << "Full Name: "; cin >> name;
+    cout << "Account Number: "; cin >> accnum;
+    cout << "Phone Number: "; cin >> phnum;
+    
+    RedeemPoints obj(name, accnum, phnum, balance);
+    
+    while (attempts--) {
+        if (obj.encryption(pass)) {
+            display(obj);
+            char choice;
+            while (true) {
+                cout << "\nChoose an option:\n1. Deposit\n2. Withdraw\n3. Redeem\n4. Check Balance\n5. Transaction History\n6. Logout\nChoice: ";
+                cin >> choice;
+                if (choice == '1') {
+                    int amount;
+                    cout << "Enter deposit amount: "; cin >> amount;
+                    obj.deposit(amount);
+                } else if (choice == '2') {
+                    int amount;
+                    cout << "Enter withdrawal amount: "; cin >> amount;
+                    obj.withdraw(amount);
+                } else if (choice == '3') {
+                    char type;
+                    cout << "Redeem by Amount (A) or Points (P): "; cin >> type;
+                    if (type == 'A') {
+                        float amount;
+                        cout << "Enter amount to redeem: "; cin >> amount;
+                        obj.redeem(amount);
+                    } else if (type == 'P') {
+                        int points;
+                        cout << "Enter points to redeem: "; cin >> points;
+                        obj.redeem(points);
+                    }
+                } else if (choice == '4') {
+                    obj.checkBalance();
+                } else if (choice == '5') {
+                    obj.transactionHistory();
+                } else if (choice == '6') {
+                    obj.logout();
+                    return 0;
+                } else {
+                    cout << "Invalid choice! Try again." << endl;
+                }
+            }
+        } else {
+            if (attempts > 0) {
+                cout << "Try again! Attempts left: " << attempts << endl;
+                cout << "Password: "; cin >> pass;
+            } else {
+                cout << "Account BLOCKED! Contact bank." << endl;
+            }
+        }
+    }
+    return 0;
+}
